@@ -21,25 +21,33 @@ class handDetector():
                                         self.detectionCon, self.trackCon)
         self.mpDraw = mp.solutions.drawing_utils
 
-
     def findHands(self, img, draw=True):
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        results = self.hands.process(imgRGB)
+        self.results = self.hands.process(imgRGB)
 
-        if results.multi_hand_landmarks:  # If hands are detected
-            for hand_landmark in results.multi_hand_landmarks:  # For each hand out of all detected hands
+        if self.results.multi_hand_landmarks:  # If hands are detected
+            for hand_landmark in self.results.multi_hand_landmarks:  # For each hand out of all detected hands
                 if draw:
                     self.mpDraw.draw_landmarks(
                         img, hand_landmark, self.mpHands.HAND_CONNECTIONS)
-
-                # for id, landmark in enumerate(hand_landmark.landmark):
-                #     print(id,landmark)
-                #     h, w, c = img.shape  # Dimensions of the image
-                #     cx, cy = int(landmark.x*w), int(landmark.y*h)
-                #     print(id, cx, cy)
-                #     if id == 0:
-                #       cv2.circle(img, (cx,cy), 5, (255, 0, 255), cv2.FILLED)
         return img
+
+    def findPosition(self, img, handNo=0, draw=True):
+        landmarks = []
+
+        if self.results.multi_hand_landmarks:
+            myHand = self.results.multi_hand_landmarks[handNo]
+
+            for id, landmark in enumerate(myHand.landmark):
+                h, w, c = img.shape  # Dimensions of the image
+                cx, cy = int(landmark.x*w), int(landmark.y*h)
+                # print(id, cx, cy)
+                landmarks.append([id, cx, cy])
+                # if id == 0:
+                if draw:
+                    cv2.circle(img, (cx, cy), 5, (255, 0, 255), cv2.FILLED)
+
+        return landmarks
 
 
 def main():
@@ -51,6 +59,10 @@ def main():
     while True:
         success, img = cap.read()
         img = detector.findHands(img)
+        landmark_list = detector.findPosition(img)
+        if len(landmark_list)!=0:
+            print(landmark_list[1])
+            
         # displaying the fps
         currentTime = time.time()
         fps = 1 / (currentTime-previousTime)
